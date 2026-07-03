@@ -6,7 +6,7 @@ import categoryJapanese from "../assets/category-japanese.png";
 import categoryKorean from "../assets/category-korean.png";
 import categoryWestern from "../assets/category-western.png";
 
-import { useModalContext } from "../contexts/ModalContext";
+import { useOpenDetailModal } from "../store/useModalStore";
 
 const categoryImages = {
   한식: categoryKorean,
@@ -32,6 +32,7 @@ const Category = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-shrink: 0;
   width: 64px;
   height: 64px;
 
@@ -76,7 +77,7 @@ const Description = styled.p`
 `;
 
 export default function RestaurantItem({ restaurant }) {
-  const { openDetailModal } = useModalContext();
+  const openDetailModal = useOpenDetailModal();
 
   function handleClick() {
     openDetailModal(restaurant);

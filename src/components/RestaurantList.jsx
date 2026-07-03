@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import RestaurantItem from "./RestaurantItem";
-import { useRestaurantContext } from "../contexts/RestaurantContext";
+import { useCategory, useRestaurants } from "../store/useRestaurantStore";
 
 const Container = styled.section`
   display: flex;
@@ -11,7 +11,13 @@ const Container = styled.section`
 `;
 
 export default function RestaurantList() {
-  const { filteredRestaurants } = useRestaurantContext();
+  const category = useCategory();
+  const restaurants = useRestaurants();
+  const filteredRestaurants =
+    category === "전체"
+      ? restaurants
+      : restaurants.filter((restaurant) => restaurant.category === category);
+
   return (
     <Container>
       <ul className="restaurant-list">

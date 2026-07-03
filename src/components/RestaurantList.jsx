@@ -1,6 +1,7 @@
 import styled from "styled-components";
 import RestaurantItem from "./RestaurantItem";
-import { useCategory, useRestaurants } from "../store/useRestaurantStore";
+import { useCategory } from "../store/useRestaurantStore";
+import useGetRestaurants from "../hooks/useGetRestaurants";
 
 const Container = styled.section`
   display: flex;
@@ -11,13 +12,15 @@ const Container = styled.section`
 `;
 
 export default function RestaurantList() {
+  const { data, isPending, isError } = useGetRestaurants();
   const category = useCategory();
-  const restaurants = useRestaurants();
   const filteredRestaurants =
     category === "전체"
-      ? restaurants
-      : restaurants.filter((restaurant) => restaurant.category === category);
+      ? data
+      : data?.filter((restaurant) => restaurant.category === category);
 
+  if (isPending) return <p>음식점 목록을 불러오는 중입니다...</p>;
+  if (isError) return <p>음식점 목록을 불러오지 못했습니다.</p>;
   return (
     <Container>
       <ul className="restaurant-list">

@@ -1,8 +1,9 @@
 import styled from "styled-components";
 import Modal from "./Modal";
 import { ALL_CATEGORIES } from "../constants/categories";
-import { useAddRestaurant } from "../store/useRestaurantStore";
 import { useCloseModal } from "../store/useModalStore";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { BASE_URL } from "../constants/api.js";
 
 const Title = styled.h2`
   margin-bottom: 36px;
@@ -106,25 +107,45 @@ const PrimaryButton = styled(Button)`
   color: var(--grey-100);
 `;
 
-export default function AddRestaurantModal() {
-  const addRestaurant = useAddRestaurant();
-  const closeModal = useCloseModal();
+const createRestaurant = async (restaurant) => {
+  const response = await fetch(BASE_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(restaurant),
+  });
+  const data = await response.json();
+  if (!response.ok) throw data;
+  return data;
+};
 
-  async function handleSubmit(e) {
+export default function AddRestaurantModal() {
+  const queryClient = useQueryClient();
+  const closeModal = useCloseModal();
+  const mutation = useMutation({
+    mutationFn: createRestaurant,
+    onSuccess() {
+      closeModal();
+      //직접 목록을 다시 가져와 store에 넣는 대신 기존 캐시를 stale 상태로 만들고 활성화된 음식점 Query가 최신 목록을 다시 조회하게 함.
+      //Promise를 반환해서 목록 재조회가 끝날 때까지 mutation을 pending 상태로 유지함.
+      return queryClient.invalidateQueries({ queryKey: ["restaurants"] });
+    },
+    onError() {
+      // 실패하면 모달을 닫지 않고 유지
+      alert("음식점 추가에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+    },
+  });
+
+  function handleSubmit(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
-    const restaurant = {
+    mutation.mutate({
       id: crypto.randomUUID(),
       category: formData.get("category"),
       name: formData.get("name"),
       description: formData.get("description"),
-    };
-    try {
-      await addRestaurant(restaurant);
-      closeModal();
-    } catch {
-      // 실패 alert는 App에서 처리하므로 모달은 닫지 않고 유지
-    }
+    });
   }
 
   return (
@@ -159,7 +180,9 @@ export default function AddRestaurantModal() {
         </FormItem>
 
         <ButtonContainer>
-          <PrimaryButton type="submit">추가하기</PrimaryButton>
+          <PrimaryButton type="submit" disabled={mutation.isPending}>
+            추가하기
+          </PrimaryButton>
         </ButtonContainer>
       </form>
     </Modal>

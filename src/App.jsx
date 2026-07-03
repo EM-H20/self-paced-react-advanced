@@ -1,19 +1,14 @@
 import "./App.css";
-import { useEffect } from "react";
 import Header from "./components/Header";
 import CategoryFilter from "./components/CategoryFilter";
 import RestaurantList from "./components/RestaurantList";
 import ModalRenderer from "./components/ModalRenderer";
-import { useFetchRestaurants } from "./store/useRestaurantStore";
+import useGetRestaurants from "./hooks/useGetRestaurants";
 
 function App() {
-  const fetchRestaurants = useFetchRestaurants();
+  const error = useGetRestaurants();
 
-  useEffect(() => {
-    fetchRestaurants().catch(() => {
-      alert("음식점 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.");
-    });
-  }, [fetchRestaurants]);
+  if (error) return <p>{error}</p>;
 
   return (
     <>

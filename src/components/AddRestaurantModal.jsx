@@ -115,9 +115,8 @@ const createRestaurant = async (restaurant) => {
     },
     body: JSON.stringify(restaurant),
   });
-  const data = await response.json();
-  if (!response.ok) throw data;
-  return data;
+  if (!response.ok) throw response;
+  return response.json();
 };
 
 export default function AddRestaurantModal() {
@@ -126,9 +125,7 @@ export default function AddRestaurantModal() {
   const mutation = useMutation({
     mutationFn: createRestaurant,
     onSuccess() {
-      closeModal();
-      //직접 목록을 다시 가져와 store에 넣는 대신 기존 캐시를 stale 상태로 만들고 활성화된 음식점 Query가 최신 목록을 다시 조회하게 함.
-      //Promise를 반환해서 목록 재조회가 끝날 때까지 mutation을 pending 상태로 유지함.
+      // 목록 재조회를 return해서 끝날 때까지 mutation을 pending으로 유지 (중복 등록 방지)
       return queryClient.invalidateQueries({ queryKey: ["restaurants"] });
     },
     onError() {
@@ -140,12 +137,16 @@ export default function AddRestaurantModal() {
   function handleSubmit(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
-    mutation.mutate({
-      id: crypto.randomUUID(),
-      category: formData.get("category"),
-      name: formData.get("name"),
-      description: formData.get("description"),
-    });
+    mutation.mutate(
+      {
+        id: crypto.randomUUID(),
+        category: formData.get("category"),
+        name: formData.get("name"),
+        description: formData.get("description"),
+      },
+      // UI 동작은 재조회가 끝난 뒤 실행되는 mutate의 onSuccess에 둠
+      { onSuccess: closeModal },
+    );
   }
 
   return (

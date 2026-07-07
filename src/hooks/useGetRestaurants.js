@@ -3,9 +3,8 @@ import { BASE_URL } from "../constants/api.js";
 
 const fetchRestaurants = async () => {
   const response = await fetch(BASE_URL);
-  const data = await response.json();
-  if (!response.ok) throw data;
-  return data;
+  if (!response.ok) throw response;
+  return response.json();
 };
 
 export default function useGetRestaurants() {
